@@ -18,7 +18,6 @@ The final fully connected network consists of 2 encoder layers and two decoder l
 The encoding stage is used to extract features for segmentation so simple features can be recognized early on and the deeper the network goes the more complex features it can recognize. The skip connections help retain some of the original information that would normally be lost. The decoder stage upscales the output of the encoder stage to the size of the original image. Lastly the convolutional output layer with softmax activation makes the pixel-wise comparison between the three classes.
 
 ![alt text][image_1] 
-
 ## Training
 After reading others experiences on Slack I decided to simply install TensorFlow with GPU support CUDA 8 and cuDNN. I tested several different setups to fully utilize the 4 GB of RAM on my GPU and ended up with 100 epochs, 150 steps per epochs, a batch size of 24 and 4 workers and was training each step in around 90 seconds. I would've preferred to use a higher batch size but 32 was all the memory my GPU had. Just reading the comments and suggestions in the Slack channel I chose a learning rate of 0.005 which yielded impressive results and didn't feel the need to tweak it that much.
  
