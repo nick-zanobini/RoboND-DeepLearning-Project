@@ -104,8 +104,9 @@ If for some reason you choose not to use Anaconda, you must install the followin
 
 *Install NVIDIA Drivers  
     * [CUDA 8.0](https://developer.nvidia.com/cuda-80-ga2-download-archive)  
-    * [cuDNN v7.0.3 for CUDA 8.0](https://developer.nvidia.com/compute/machine-learning/cudnn/secure/v7.0.3/prod/8.0_20170926/cudnn-8.0-linux-x64-v7-tgz)    
-
+    * [cuDNN v7.0.3 for CUDA 8.0](https://developer.nvidia.com/compute/machine-learning/cudnn/secure/v7.0.3/prod/8.0_20170926/cudnn-8.0-linux-x64-v7-tgz)  
+    ![alt text][image_4]
+    
 * Install cuDNN
 	```
 	tar -xzvf cudnn-8.0-linux-x64-v7.tgz
