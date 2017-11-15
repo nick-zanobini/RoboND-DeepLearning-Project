@@ -2,6 +2,10 @@
 
 [image_0]: ./docs/misc/sim_screenshot.png
 [image_1]: ./docs/misc/network_arch.png
+[image_2]: ./docs/misc/CUDA8_Install.png
+[image_3]: ./docs/misc/NVIDIA_Drivers.png
+[image_4]: ./docs/misc/Verified_Driver.png
+
 
 ## Deep Learning Project ##
 
@@ -77,9 +81,30 @@ If for some reason you choose not to use Anaconda, you must install the followin
     sudo apt-get install cuda -y
     ```
 
-*Install NVIDIA Drivers
-[CUDA 8.0](https://developer.nvidia.com/cuda-80-ga2-download-archive)
-[cuDNN v7.0.3 for CUDA 8.0](https://developer.nvidia.com/compute/machine-learning/cudnn/secure/v7.0.3/prod/8.0_20170926/cudnn-8.0-linux-x64-v7-tgz)
+* Install NVIDIA Graphics Card Drivers
+    ```
+    lspci | grep -i nvidia
+    ```
+    * Which should yield:
+    ![alt text][image_3] 
+    
+    * Next add the proprietary repository of NVIDIA drivers
+    ```
+    sudo add-apt-repository ppa:graphics-drivers/ppa
+    sudo apt-get update
+    sudo apt-get install nvidia-398
+    ```
+    
+    * Once NVIDIA driver is installed, restart the computer. You can verify the driver using the following command.
+    ```
+    cat /proc/driver/nvidia/version
+    ```
+    ![alt text][image_4] 
+    
+
+*Install NVIDIA Drivers  
+    * [CUDA 8.0](https://developer.nvidia.com/cuda-80-ga2-download-archive)  
+    * [cuDNN v7.0.3 for CUDA 8.0](https://developer.nvidia.com/compute/machine-learning/cudnn/secure/v7.0.3/prod/8.0_20170926/cudnn-8.0-linux-x64-v7-tgz)    
 
 * Install cuDNN
 	```
