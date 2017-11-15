@@ -42,9 +42,11 @@ def make_dir_if_not_exist(path):
 
 
 def get_mask_files(image_files):
-    is_cam2 = lambda x: x.find('cam2_') != -1
-    is_cam3 = lambda x: x.find('cam3_') != -1
-    is_cam4 = lambda x: x.find('cam4_') != -1
+    def is_cam2(x): return x.find('cam2_') != -1
+
+    def is_cam3(x): return x.find('cam3_') != -1
+
+    def is_cam4(x): return x.find('cam4_') != -1
 
     cam2 = sorted(list(filter(is_cam2, image_files)))
     cam3 = sorted(list(filter(is_cam3, image_files)))
@@ -57,28 +59,29 @@ def move_labels(input_folder, output_folder, fold_id):
 
     output_folder = os.path.join(output_folder, 'masks')
     make_dir_if_not_exist(output_folder)
-    cam2, cam3, cam4 = get_mask_files(files) 
+    cam2, cam3, cam4 = get_mask_files(files)
 
-    for e,i in enumerate(cam2):
+    for e, i in enumerate(cam2):
         fname_parts = i.split(os.sep)
 
         # Thanks @Nitish for these fixes:)
-        cam2_base = str(fold_id) + '_' + fname_parts[-3] +'_' + fname_parts[-1]
+        cam2_base = str(fold_id) + '_' + fname_parts[-3] + '_' + fname_parts[-1]
 
         fname_parts = cam3[e].split(os.sep)
-        cam3_base = str(fold_id) + '_' + fname_parts[-3] +'_' + fname_parts[-1]
+        cam3_base = str(fold_id) + '_' + fname_parts[-3] + '_' + fname_parts[-1]
 
         fname_parts = cam4[e].split(os.sep)
-        cam4_base = str(fold_id) + '_' + fname_parts[-3] +'_' + fname_parts[-1]
+        cam4_base = str(fold_id) + '_' + fname_parts[-3] + '_' + fname_parts[-1]
 
-        shutil.copy(i, os.path.join(output_folder,cam2_base))
-        shutil.copy(cam3[e], os.path.join(output_folder,cam3_base))
-        shutil.copy(cam4[e], os.path.join(output_folder,cam4_base))
+        shutil.copy(i, os.path.join(output_folder, cam2_base))
+        shutil.copy(cam3[e], os.path.join(output_folder, cam3_base))
+        shutil.copy(cam4[e], os.path.join(output_folder, cam4_base))
 
 
 def move_png_to_jpeg(input_folder, output_folder, fold_id):
     files = glob.glob(os.path.join(input_folder, '*', '*.png'))
-    is_cam1 = lambda x: x.find('cam1_') != -1
+
+    def is_cam1(x): return x.find('cam1_') != -1
     cam1_files = sorted(list(filter(is_cam1, files)))
     output_folder = os.path.join(output_folder, 'images')
     make_dir_if_not_exist(output_folder)
@@ -86,7 +89,7 @@ def move_png_to_jpeg(input_folder, output_folder, fold_id):
     for i in cam1_files:
         cam1 = misc.imread(i)
         fname_parts = i.split(os.sep)
-        cam1_base = str(fold_id) + '_' +fname_parts[-3] + '_' + fname_parts[-1].split('.')[0] + '.jpeg'
+        cam1_base = str(fold_id) + '_' + fname_parts[-3] + '_' + fname_parts[-1].split('.')[0] + '.jpeg'
         misc.imsave(os.path.join(output_folder, cam1_base), cam1, format='jpeg')
 
 
@@ -95,18 +98,18 @@ def combine_masks(processed_folder):
     files = glob.glob(os.path.join(processed_mask_folder, '*.png'))
     cam2, cam3, cam4 = get_mask_files(files)
 
-    for e,i in enumerate(cam2):
-        im2 = misc.imread(i)[:,:,0]
-        im3 = misc.imread(cam3[e])[:,:,0]
-        im4 = misc.imread(cam4[e])[:,:,0]
+    for e, i in enumerate(cam2):
+        im2 = misc.imread(i)[:, :, 0]
+        im3 = misc.imread(cam3[e])[:, :, 0]
+        im4 = misc.imread(cam4[e])[:, :, 0]
 
-        stacked = np.stack((im4-1, im2, im3), 2)
+        stacked = np.stack((im4 - 1, im2, im3), 2)
         argmin = np.argmin(stacked, axis=-1)
-        im = np.stack((argmin==0, argmin==1, argmin==2), 2)
+        im = np.stack((argmin == 0, argmin == 1, argmin == 2), 2)
 
         base_name = os.path.basename(i)
         ind = base_name.find('cam')
-        new_fname = base_name[:ind] + 'mask'+ base_name[ind+4:]
+        new_fname = base_name[:ind] + 'mask' + base_name[ind + 4:]
 
         dir_base = str(os.sep).join(i.split(str(os.sep))[:-1])
         misc.imsave(os.path.join(dir_base, new_fname), im)
@@ -118,15 +121,15 @@ def combine_masks(processed_folder):
 def get_im_data(base_path):
     folds = glob.glob(os.path.join(base_path, '*', '*'))
     indicator_dict = dict()
-    
-    is_val = lambda x: x.find('validation') != -1
-    
+
+    def is_val(x): return x.find('validation') != -1
+
     for f in folds:
-        files = glob.glob(os.path.join(f, '*','*.png'))
+        files = glob.glob(os.path.join(f, '*', '*.png'))
         if len(files) == 0:
             indicator_dict[f] = (False, is_val(f))
         else:
-            indicator_dict[f] = (True,  is_val(f))
+            indicator_dict[f] = (True, is_val(f))
     return indicator_dict
 
 
@@ -134,7 +137,7 @@ if __name__ == '__main__':
     raw_data = os.path.join('..', 'data', 'raw_sim_data')
     proc_data = os.path.join('..', 'data', 'processed_sim_data')
 
-    indicator_dict = get_im_data(raw_data) 
+    indicator_dict = get_im_data(raw_data)
 
     out_val_dir = os.path.join(proc_data, 'validation')
     out_train_dir = os.path.join(proc_data, 'train')
@@ -145,14 +148,13 @@ if __name__ == '__main__':
             continue
 
         # validation
-        if i[1][1]: 
-             move_png_to_jpeg(i[0], out_val_dir, e)
-             move_labels(i[0], out_val_dir, e)
-        # train 
+        if i[1][1]:
+            move_png_to_jpeg(i[0], out_val_dir, e)
+            move_labels(i[0], out_val_dir, e)
+        # train
         else:
-             move_png_to_jpeg(i[0], out_train_dir, e)
-             move_labels(i[0], out_train_dir, e)
-
+            move_png_to_jpeg(i[0], out_train_dir, e)
+            move_labels(i[0], out_train_dir, e)
 
     combine_masks(out_val_dir)
     combine_masks(out_train_dir)

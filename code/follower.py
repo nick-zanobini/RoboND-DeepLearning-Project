@@ -78,31 +78,32 @@ def get_depth_image(data):
 
 
 def get_xyz_from_image(u, v, depth, im_hw):
-    cx = im_hw//2
-    cy = im_hw//2
+    cx = im_hw // 2
+    cy = im_hw // 2
     fx = im_hw
     fy = im_hw
-    x = (u-cx)*depth/fx
-    y = (v-cy)*depth/fy
-    return [depth,-x,y]
+    x = (u - cx) * depth / fx
+    y = (v - cy) * depth / fy
+    return [depth, -x, y]
 
 
 def get_ros_pose(data):
     s_pose = data.split(",")
     ros_pose = [float(i) for i in s_pose]
-    for i in range(3,6):
-        if ros_pose[i]<-180: ros_pose[i] = 360 + ros_pose[i]
+    for i in range(3, 6):
+        if ros_pose[i] < -180:
+            ros_pose[i] = 360 + ros_pose[i]
     return ros_pose
 
 
 def get_unity_pose_from_ros(data):
-    unity_point = [-data[1],data[2],data[0]]
+    unity_point = [-data[1], data[2], data[0]]
     return unity_point
 
 
 class Follower(object):
-    def __init__(self, image_hw, model, pred_viz_enabled = False, queue=None):
-       
+    def __init__(self, image_hw, model, pred_viz_enabled=False, queue=None):
+
         self.queue = queue
         self.model = model
         self.image_hw = image_hw
@@ -110,7 +111,6 @@ class Follower(object):
         self.num_no_see = 0
         self.pred_viz_enabled = pred_viz_enabled
         self.target_found = False
-
 
     def on_sensor_frame(self, data):
         rgb_image = Image.open(BytesIO(base64.b64decode(data['rgb_image'])))
@@ -141,7 +141,7 @@ class Follower(object):
             depth_img = get_depth_image(data['depth_image'])
 
             # Get XYZ coordinates for specific pixel
-            pixel_depth = depth_img[centroid[0]][centroid[1]][0]*50/255.0
+            pixel_depth = depth_img[centroid[0]][centroid[1]][0] * 50 / 255.0
             point_3d = get_xyz_from_image(centroid[0], centroid[1], pixel_depth, self.image_hw)
             point_3d.append(1)
 
@@ -152,7 +152,7 @@ class Follower(object):
             # Transformation Matrix
             R = euler2mat(math.radians(cam_pose[3]), math.radians(cam_pose[4]), math.radians(cam_pose[5]))
             T = np.c_[R, cam_pose[:3]]
-            T = np.vstack([T, [0,0,0,1]]) # transformation matrix from world to quad
+            T = np.vstack([T, [0, 0, 0, 1]])  # transformation matrix from world to quad
 
             # 3D point in ROS coordinates
             ros_point = np.dot(T, point_3d)
@@ -164,7 +164,7 @@ class Follower(object):
             self.num_no_see = 0
 
             # Publish Hero Marker
-            marker_pos = [ros_point[0],ros_point[1], ros_point[2]] + [0, 0, 0]
+            marker_pos = [ros_point[0], ros_point[1], ros_point[2]] + [0, 0, 0]
             marker_msg = sio_msgs.create_box_marker_msg(np.random.randint(99999), marker_pos)
             sio.emit('create_box_marker', marker_msg)
 
@@ -186,7 +186,7 @@ class Follower(object):
 @sio.on('sensor_frame')
 def sensor_frame(sid, data):
     #global graph
-    #with graph.as_default():
+    # with graph.as_default():
     follower.on_sensor_frame(data)
 
 
@@ -204,7 +204,6 @@ if __name__ == '__main__':
     parser.add_argument('weight_file',
                         help='The model file to use for inference')
 
-
     parser.add_argument('--pred_viz',
                         action='store_true',
                         help='display live overlay visualization with prediction regions')
@@ -214,7 +213,7 @@ if __name__ == '__main__':
     model = model_tools.load_network(args.weight_file)
     image_hw = model.layers[0].output_shape[1]
 
-    if args.pred_viz: 
+    if args.pred_viz:
         overlay_plot = visualization.SideBySidePlot('Segmentation Overlay', image_hw)
         queue = overlay_plot.start()
     else:
@@ -222,5 +221,5 @@ if __name__ == '__main__':
 
     follower = Follower(image_hw, model, args.pred_viz, queue)
     # start eventlet server
-    
+
     sio_server()

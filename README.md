@@ -1,10 +1,27 @@
 [![Udacity - Robotics NanoDegree Program](https://s3-us-west-1.amazonaws.com/udacity-robotics/Extra+Images/RoboND_flag.png)](https://www.udacity.com/robotics)
 
+[image_0]: ./docs/misc/sim_screenshot.png
+[image_1]: ./docs/misc/network_arch.png
+
 ## Deep Learning Project ##
 
-In this project, you will train a deep neural network to identify and track a target in simulation. So-called “follow me” applications like this are key to many fields of robotics and the very same techniques you apply here could be extended to scenarios like advanced cruise control in autonomous vehicles or human-robot collaboration in industry.
+I trained the model at home on my GTX-980 to follow the hero based on the provided training set. I have included the steps to install TensorFlow GPU and CUDA8 on Ubuntu 16.04.
 
-[image_0]: ./docs/misc/sim_screenshot.png
+
+## Network Architecture
+The final fully connected network consists of 2 encoder layers and two decoder layers connected by a 1x1 convolution layer  The  1x1 convolution layer is necessary to retain spacial information from each image. Normally simply a fully connected network would be used to classify images but a network with fully connected layers would not retain any spacial information hence why every layer is a convolutional layer.
+
+The encoding stage is used to extract features for segmentation so simple features can be recognized early on and the deeper the network goes the more complex features it can recognize. The skip connections help retain some of the original information that would normally be lost. The decoder stage upscales the output of the encoder stage to the size of the original image. Lastly the convolutional output layer with softmax activation makes the pixel-wise comparison between the three classes.
+
+![alt text][image_1] 
+
+## Training
+After reading others experiences on Slack I decided to simply install TensorFlow with GPU support CUDA 8 and cuDNN. I tested several different setups to fully utilize the 4 GB of RAM on my GPU and ended up with 100 epochs, 150 steps per epochs, a batch size of 24 and 4 workers and was training each step in around 90 seconds. I would've preferred to use a higher batch size but 32 was all the memory my GPU had. Just reading the comments and suggestions in the Slack channel I chose a learning rate of 0.005 which yielded impressive results and didn't feel the need to tweak it that much.
+ 
+## Results
+My final score was 43% (.43) and an IOU score of 55% but this score might be a little over inflated as it was tested using the provided data. This network architecture could be used to track a cat or a dog or any other image assuming it was trained to said image. It would be interesting if was identifying everything it found in each from and then the user could decide which detected object the drone should follow. 
+
+
 ![alt text][image_0] 
 
 ## Setup Instructions
@@ -46,6 +63,74 @@ If for some reason you choose not to use Anaconda, you must install the followin
 * scikit-image
 * transforms3d
 * PyQt4/Pyqt5
+
+**Setup Computer for Home Training**  
+* Prepare Computer
+    ```
+    sudo apt-get update
+    sudo apt-get upgrade  
+    sudo apt-get install build-essential cmake g++ gfortran 
+    sudo apt-get git pkg-config python-dev 
+    sudo apt-get software-properties-common wget
+    sudo apt-get autoremove 
+    sudo rm -rf /var/lib/apt/lists/*
+    sudo apt-get install cuda -y
+    ```
+
+*Install NVIDIA Drivers
+[CUDA 8.0](https://developer.nvidia.com/cuda-80-ga2-download-archive)
+[cuDNN v7.0.3 for CUDA 8.0](https://developer.nvidia.com/compute/machine-learning/cudnn/secure/v7.0.3/prod/8.0_20170926/cudnn-8.0-linux-x64-v7-tgz)
+
+* Install cuDNN
+	```
+	tar -xzvf cudnn-8.0-linux-x64-v7.tgz
+	sudo cp cuda/include/cudnn.h /usr/local/cuda/include
+	sudo cp cuda/lib64/libcudnn* /usr/local/cuda/lib64
+	sudo chmod a+r /usr/local/cuda/include/cudnn.h /usr/local/cuda/lib64/libcudnn*
+
+	```
+
+* Link CUDA 8 to CUDA 5 for Tensorflow
+	```
+    cd /usr/local/cuda/lib64/
+    sudo ln -s libcudnn.so.5.1.10 libcudnn.so.5
+    sudo ln -s libcudnn.so.5 libcudnn.so
+
+	```
+
+* Check the links
+	```
+	ls -l libcudnn*
+	```
+	* Should give:
+        ```
+        -rwxr-xr-x 1 root root 217188104 Nov  6 22:07 libcudnn.so
+        lrwxrwxrwx 1 root root        17 Nov  6 22:21 libcudnn.so.5 -> libcudnn.so.7.0.3
+        -rwxr-xr-x 1 root root 217188104 Nov  6 22:07 libcudnn.so.7
+        -rwxr-xr-x 1 root root 217188104 Nov  6 22:07 libcudnn.so.7.0.3
+        -rw-r--r-- 1 root root 211053738 Nov  6 22:07 libcudnn_static.a
+        ```
+
+* Copy `cudnn.h` in the `include` directory to `usr/local/cuda/include`
+	```
+	sudo cp cudnn.h /usr/local/cuda/include/
+	```
+	
+* Append to `~/.bashrc`:
+    ```
+    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64"
+    export CUDA_HOME=/usr/local/cuda
+    ```
+    
+* Reload `~/.bashrc`:
+    ```
+    source ~/.bashrc
+    ```
+	
+* Install TensorFlow-GPU
+    ```
+    sudo pip install tensorflow-gpu==1.2.1
+    ```
 
 ## Implement the Segmentation Network
 1. Download the training dataset from above and extract to the project `data` directory.
@@ -126,7 +211,7 @@ After the training run has completed, your model will be stored in the `data/wei
 
 The **sample_evalution_data** directory contains data specifically designed to test the networks performance on the FollowME task. In sample_evaluation data are three directories each generated using a different sampling method. The structure of these directories is exactly the same as `validation`, and `train` datasets provided to you. For instance `patrol_with_targ` contains an `images` and `masks` subdirectory. If you would like to the evaluation code on your `validation` data a copy of the it should be moved into `sample_evaluation_data`, and then the appropriate arguments changed to the function calls in the `model_training.ipynb` notebook.
 
-The notebook has examples of how to evaulate your model once you finish training. Think about the sourcing methods, and how the information provided in the evaluation sections relates to the final score. Then try things out that seem like they may work. 
+The notebook has examples of how to evaluate your model once you finish training. Think about the sourcing methods, and how the information provided in the evaluation sections relates to the final score. Then try things out that seem like they may work. 
 
 ## Scoring ##
 
